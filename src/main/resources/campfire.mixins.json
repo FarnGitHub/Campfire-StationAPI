@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "farn.campfire.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "plugin": "farn.campfire.CampFireMixinPlugin",
+  "mixins": [
+    "NbtListAccessor"
+  ],
+  "client": [
+    "item_renderer.ArsenicItemRendererMixin",
+    "item_renderer.Dropped3DItemMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

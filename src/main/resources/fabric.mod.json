@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "campfire",
+  "version": "${version}",
+  "name": "Campfire Block",
+  "description": "This mod add Campfire Block. It is mostly identical to how it work in 1.14",
+  "authors": [
+    "farnfarn02",
+    "connor135246"
+  ],
+  "license": "MIT",
+  "icon": "assets/campfire/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "stationapi:event_bus": [
+      "farn.campfire.CampFireStationAPI"
+    ]
+  },
+  "mixins": [
+    "campfire.mixins.json"
+  ],
+  "accessWidener": "campfire.accessWidener",
+  "depends": {
+    "minecraft": "1.0.0-beta.7.3",
+    "stationapi": "*"
+  }
+}
