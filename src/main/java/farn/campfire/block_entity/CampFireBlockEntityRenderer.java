@@ -45,19 +45,18 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
                         GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
                         if (stack.getItem() instanceof BlockItem itemForm && BlockRenderManager.isSideLit(Block.BLOCKS[itemForm.id].getRenderType()))
                         {
-                            GL11.glRotatef(-renderSlot * 90, 0, 1, 0);
+                            GL11.glRotatef(renderSlot * 90, 0, 1, 0);
                             GL11.glTranslated(-0.125, -0.01625, 0.0);
                         }
                         else
                         {
                             GL11.glRotatef(180, 0, 1, 1);
-                            GL11.glRotatef(renderSlot * 90, 0, 0, 1);
+                            GL11.glRotatef(renderSlot * -90, 0, 0, 1);
                             GL11.glRotatef(270, 0, 0, 1);
                         }
                         GL11.glScalef(0.625F, 0.625F, 0.625F);
-                        GL11.glTranslatef(0.0F, -0.05F, 0.0F);
                         invRender[slot].minBrightness = 1.0F;
-                        EntityRenderDispatcher.INSTANCE.render(invRender[slot], 0.0, 0.0, 0.0, 0.0F, 0.0F);
+                        EntityRenderDispatcher.INSTANCE.render(invRender[slot], 0, 0, 0, 0.0F, 0.0F);
                         stopRotate = false;
                         GL11.glPopMatrix();
                     } else {
@@ -74,13 +73,11 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
     private static final double BASE_Z_OFFSET = 0.9375;
     private static final double ACROSS = 0.875;
     private static final double EDGE = 0.125;
-    private static final double EDGELEFT = 0.1875;
-    private static final double EDGERIGHT = 0.25;
     private static final double[][] RENDER_POSITION_ITEM = new double[][] {
             { BASE_X_OFFSET, BASE_Y_OFFSET, BASE_Z_OFFSET + EDGE - ACROSS },
-            { BASE_X_OFFSET - EDGE, BASE_Y_OFFSET, BASE_Z_OFFSET - EDGELEFT },
+            { BASE_X_OFFSET - EDGE, BASE_Y_OFFSET, BASE_Z_OFFSET },
             { BASE_X_OFFSET - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - EDGE },
-            { BASE_X_OFFSET + EDGE - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET + EDGERIGHT - ACROSS } };
+            { BASE_X_OFFSET + EDGE - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - ACROSS } };
     private static final int[] RENDER_SLOT_MAPPING = new int[]{3, 0, 1, 2};
     public static double[] getRenderPositionFromRenderSlot(int renderslot)
     {

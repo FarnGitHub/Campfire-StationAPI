@@ -19,18 +19,19 @@ import java.util.Random;
 public class CampFireBlockEntity extends BlockEntity implements Inventory
 {
     public ItemStack[] item = new ItemStack[4];
+    public ItemStack[] resultCache = new ItemStack[4];
     protected int[] cookingDuration = new int[item.length];
     protected static final Random rand = new Random();
 
-    //check if that item can be cook in campfire
-    public boolean canCook(ItemStack stack) {
-        return stack != null && CampFireRecipe.canCook(stack.itemId);
-    }
 
     //called when item is finished cooking
     public void finishCookedItem(int slotIndex) {
-        dropUnbuggedItem(CampFireRecipe.getCookedItem(item[slotIndex].itemId), world, x,y,z);
+        if(resultCache[slotIndex] == null) {
+            resultCache[slotIndex] = CampFireRecipe.getResultFor(item[slotIndex]);
+        }
+        dropUnbuggedItem(resultCache[slotIndex], world, x,y,z);
         removeStack(slotIndex, 1);
+        resultCache[slotIndex] = null;
         this.markDirty();
     }
 
@@ -58,9 +59,11 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     //insert the item inside campfire
     public boolean insertFood(ItemStack stack) {
-        if(!canCook(stack) || item[item.length - 1] != null) return false;
+        ItemStack cookedStack;
+        if(stack == null || (cookedStack = CampFireRecipe.getResultFor(stack)) == null || item[item.length - 1] != null) return false;
         for(int slotIndex = 0; slotIndex < item.length; ++slotIndex) {
             if(item[slotIndex] == null) {
+                resultCache[slotIndex] = cookedStack;
                 setStack(slotIndex, stack);
                 cookingDuration[slotIndex] = 0;
                 this.markDirty();
