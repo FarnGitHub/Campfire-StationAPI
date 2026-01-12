@@ -4,6 +4,7 @@ import farn.campfire.block.CampFireBlock;
 import farn.campfire.block_entity.CampFireBlockEntity;
 import farn.campfire.block_entity.CampFireBlockEntityRenderer;
 import farn.campfire.packet.PacketUpdateCampfireItem;
+import farn.campfire.recipe.CampfireJsonRecipeManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.mine_diver.unsafeevents.listener.EventListener;
@@ -16,6 +17,7 @@ import net.modificationstation.stationapi.api.client.event.texture.TextureRegist
 import net.modificationstation.stationapi.api.client.texture.atlas.Atlases;
 import net.modificationstation.stationapi.api.client.texture.atlas.ExpandableAtlas;
 import net.modificationstation.stationapi.api.event.block.entity.BlockEntityRegisterEvent;
+import net.modificationstation.stationapi.api.event.init.InitFinishedEvent;
 import net.modificationstation.stationapi.api.event.network.packet.PacketRegisterEvent;
 import net.modificationstation.stationapi.api.event.recipe.RecipeRegisterEvent;
 import net.modificationstation.stationapi.api.event.registry.BlockRegistryEvent;
@@ -25,11 +27,17 @@ import net.modificationstation.stationapi.api.registry.PacketTypeRegistry;
 import net.modificationstation.stationapi.api.registry.Registry;
 import net.modificationstation.stationapi.api.util.Namespace;
 import net.modificationstation.stationapi.api.util.Null;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
 
 @SuppressWarnings("unused")
 public class CampFireStationAPI {
     @Entrypoint.Namespace
     public static Namespace NAMESPACE = Null.get();
+
+    @Entrypoint.Logger
+    public static Logger LOGGER = Null.get();
 
     public static int campfire_fire = 0;
     public static int campfire_log = 0;
@@ -43,6 +51,17 @@ public class CampFireStationAPI {
         campfire_fire = terrainAtlas.addTexture(NAMESPACE.id("block/campfire_fire")).index;
         campfire_log = terrainAtlas.addTexture(NAMESPACE.id("block/campfire_log")).index;
         campfire_log_lit = terrainAtlas.addTexture(NAMESPACE.id("block/campfire_log_lit")).index;
+    }
+
+    @EventListener
+    public void readJsonRecipe(InitFinishedEvent event) {
+        File[] theJsons = CampfireJsonRecipeManager.folderWithRecipeJson.listFiles();
+        if(theJsons != null) {
+            for(File file : theJsons) {
+                if(file != null && file.getName().endsWith(".json"))
+                    CampfireJsonRecipeManager.readJson(file);
+            }
+        }
     }
 
     @EventListener

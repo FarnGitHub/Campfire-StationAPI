@@ -15,7 +15,7 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
 {
 
     protected ItemEntity[] invRender = new ItemEntity[4];
-    public static boolean stopRotate = false;
+    public static boolean renderOnCampfire = false;
 
     @Override
     public void render(BlockEntity tile, double x, double y, double z, float scale)
@@ -39,7 +39,7 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
                         else
                             invRender[slot].setWorld(ctile.world);
                         GL11.glPushMatrix();
-                        stopRotate = true;
+                        renderOnCampfire = true;
                         GL11.glDisable(GL11.GL_BLEND);
                         double[] position = getRenderPositionFromRenderSlot(renderSlot);
                         GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
@@ -57,7 +57,7 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
                         GL11.glScalef(0.625F, 0.625F, 0.625F);
                         invRender[slot].minBrightness = 1.0F;
                         EntityRenderDispatcher.INSTANCE.render(invRender[slot], 0, 0, 0, 0.0F, 0.0F);
-                        stopRotate = false;
+                        renderOnCampfire = false;
                         GL11.glPopMatrix();
                     } else {
                         invRender[slot] = null;

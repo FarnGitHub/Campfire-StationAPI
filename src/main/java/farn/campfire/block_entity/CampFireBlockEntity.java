@@ -1,6 +1,6 @@
 package farn.campfire.block_entity;
 
-import farn.campfire.CampFireRecipe;
+import farn.campfire.recipe.CampFireRecipeManager;
 import farn.campfire.packet.PacketUpdateCampfireItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -19,19 +19,15 @@ import java.util.Random;
 public class CampFireBlockEntity extends BlockEntity implements Inventory
 {
     public ItemStack[] item = new ItemStack[4];
-    public ItemStack[] resultCache = new ItemStack[4];
     protected int[] cookingDuration = new int[item.length];
     protected static final Random rand = new Random();
 
 
     //called when item is finished cooking
     public void finishCookedItem(int slotIndex) {
-        if(resultCache[slotIndex] == null) {
-            resultCache[slotIndex] = CampFireRecipe.getResultFor(item[slotIndex]);
-        }
-        dropUnbuggedItem(resultCache[slotIndex], world, x,y,z);
+        dropUnbuggedItem(CampFireRecipeManager.getResultFor(item[slotIndex]), world, x,y,z);
         removeStack(slotIndex, 1);
-        resultCache[slotIndex] = null;
+        cookingDuration[slotIndex] = 0;
         this.markDirty();
     }
 
@@ -59,11 +55,9 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     //insert the item inside campfire
     public boolean insertFood(ItemStack stack) {
-        ItemStack cookedStack;
-        if(stack == null || (cookedStack = CampFireRecipe.getResultFor(stack)) == null || item[item.length - 1] != null) return false;
+        if(stack == null || CampFireRecipeManager.getResultFor(stack) == null || item[item.length - 1] != null) return false;
         for(int slotIndex = 0; slotIndex < item.length; ++slotIndex) {
             if(item[slotIndex] == null) {
-                resultCache[slotIndex] = cookedStack;
                 setStack(slotIndex, stack);
                 cookingDuration[slotIndex] = 0;
                 this.markDirty();
@@ -75,6 +69,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     //vanilla staff
 
+    @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
         cookingDuration = nbt.getIntArray("cookedTime");
@@ -90,6 +85,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         }
     }
 
+    @Override
     public void writeNbt(NbtCompound nbt) {
         super.writeNbt(nbt);
         nbt.put("cookedTime", cookingDuration);
@@ -163,6 +159,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         }
     }
 
+    @Override
     public void tick() {
         if (!this.world.isRemote) {
             for(int slotIndex = 0; slotIndex < item.length; ++slotIndex) {
