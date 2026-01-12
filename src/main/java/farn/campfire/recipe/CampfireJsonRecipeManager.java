@@ -22,8 +22,8 @@ public class CampfireJsonRecipeManager {
     static {
         try {
             folderWithRecipeJson = Files.createDirectories(Paths.get(FabricLoader.getInstance().getConfigDir().toString(), "campfire_recipe")).toFile();
-            writeDefaultRecipe("cooked_porkchop",new ItemData("minecraft:porkchop", -1),new ItemData("minecraft:cooked_porkchop", -1));
-            writeDefaultRecipe("cooked_fish",new ItemData("minecraft:cod", -1),new ItemData("minecraft:cooked_cod", -1));
+            writeDefaultRecipe("cooked_porkchop",new ItemData("minecraft:porkchop", -1),new ItemData("minecraft:cooked_porkchop", 0));
+            writeDefaultRecipe("cooked_fish",new ItemData("minecraft:cod", -1),new ItemData("minecraft:cooked_cod", 0));
         } catch (IOException e) {
             throw new RuntimeException();
         }
