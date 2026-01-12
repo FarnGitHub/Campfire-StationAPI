@@ -1,12 +1,10 @@
 package farn.campfire.packet;
 
 import farn.campfire.block_entity.CampFireBlockEntity;
-import farn.campfire.mixin.NbtListAccessor;
+import farn.campfire.mixin.NbtCompoundAcc;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.network.NetworkHandler;
 import net.minecraft.network.packet.Packet;
 import net.modificationstation.stationapi.api.entity.player.PlayerHelper;
@@ -26,18 +24,17 @@ public class PacketUpdateCampfireItem extends Packet implements ManagedPacket<Pa
     public int x;
     public int y;
     public int z;
-    public NbtList list;
-    private int listSize;
+    public NbtCompound compound;
+    private int length;
 
     public PacketUpdateCampfireItem() {
     }
 
-    @Environment(EnvType.SERVER)
-    public PacketUpdateCampfireItem(int x, int y, int z, NbtList list) {
+    public PacketUpdateCampfireItem(int x, int y, int z, NbtCompound list) {
         this.x = x;
         this.y = y;
         this.z = z;
-        this.list = list;
+        this.compound = list;
     }
 
     @Override
@@ -46,7 +43,8 @@ public class PacketUpdateCampfireItem extends Packet implements ManagedPacket<Pa
             x = stream.readInt();
             y = stream.readInt();
             z = stream.readInt();
-            ((NbtListAccessor) list).campfire_read(stream);
+            compound = new NbtCompound();
+            ((NbtCompoundAcc) compound).campfire_read(stream);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -60,20 +58,11 @@ public class PacketUpdateCampfireItem extends Packet implements ManagedPacket<Pa
             stream.writeInt(x);
             stream.writeInt(y);
             stream.writeInt(z);
-            writeCampfireItemList(stream);
+            ((NbtCompoundAcc) compound).campfire_write(stream);
+            length = stream.size();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private void writeCampfireItemList(DataOutputStream stream) {
-        ((NbtListAccessor) list).campfire_write(stream);
-        try {
-            stream.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        listSize = stream.size();
     }
 
     @Override
@@ -87,13 +76,7 @@ public class PacketUpdateCampfireItem extends Packet implements ManagedPacket<Pa
     @Environment(EnvType.CLIENT)
     public void handleClient(NetworkHandler handler) {
         if(PlayerHelper.getPlayerFromGame().world.getBlockEntity(x,y,z) instanceof CampFireBlockEntity campfire) {
-            if(list != null) {
-                for(int index = 0; index < campfire.item.length; ++index) {
-                    if(list.get(index) instanceof NbtCompound compound) {
-                        campfire.item[index] = new ItemStack(compound);
-                    }
-                }
-            }
+            campfire.readNbt(compound);
         }
     }
 
@@ -103,7 +86,7 @@ public class PacketUpdateCampfireItem extends Packet implements ManagedPacket<Pa
 
     @Override
     public int size() {
-        return 12 + listSize;
+        return 12 + length;
     }
 
     @Override

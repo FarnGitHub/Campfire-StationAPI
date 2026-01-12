@@ -125,11 +125,9 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     @Environment(EnvType.SERVER)
     public Packet createUpdatePacket() {
-        NbtList list = new NbtList();
-        for(ItemStack stack : item) {
-            if(stack != null) list.add(stack.writeNbt(new NbtCompound()));
-        }
-        return new PacketUpdateCampfireItem(x,y,z, list);
+        NbtCompound newCom = new NbtCompound();
+        writeNbt(newCom);
+        return new PacketUpdateCampfireItem(x,y,z, newCom);
     }
 
     @Override

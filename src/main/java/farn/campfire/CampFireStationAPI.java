@@ -56,12 +56,10 @@ public class CampFireStationAPI {
     @EventListener
     public void readJsonRecipe(InitFinishedEvent event) {
         File[] theJsons = CampfireJsonRecipeManager.folderWithRecipeJson.listFiles();
-        if(theJsons != null) {
-            for(File file : theJsons) {
+        if(theJsons != null)
+            for(File file : theJsons)
                 if(file != null && file.getName().endsWith(".json"))
                     CampfireJsonRecipeManager.readJson(file);
-            }
-        }
     }
 
     @EventListener

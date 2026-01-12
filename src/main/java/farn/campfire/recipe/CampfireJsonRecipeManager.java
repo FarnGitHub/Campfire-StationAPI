@@ -32,10 +32,9 @@ public class CampfireJsonRecipeManager {
     public static void writeDefaultRecipe(String jsonName, ItemData input, ItemData output) {
         File jsonFile = new File(folderWithRecipeJson, jsonName + ".json");
         if(!jsonFile.exists()) {
-            Gson json = new Gson();
             RecipeData recipe = new RecipeData(input, output);
             try(FileWriter writer = new FileWriter(jsonFile)) {
-                json.toJson(recipe, writer);
+                (new Gson()).toJson(recipe, writer);
                 addRecipeFromRecord(recipe.input, recipe.output);
             } catch (Exception e) {
                 CampFireStationAPI.LOGGER.error(e.toString());

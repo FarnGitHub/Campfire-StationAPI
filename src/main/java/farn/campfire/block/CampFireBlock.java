@@ -2,6 +2,9 @@ package farn.campfire.block;
 
 import farn.campfire.CampFireStationAPI;
 import farn.campfire.block_entity.CampFireBlockEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.api.EnvironmentInterface;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.render.block.BlockRenderManager;
@@ -19,6 +22,8 @@ import net.modificationstation.stationapi.api.util.Identifier;
 
 import java.util.Random;
 
+@EnvironmentInterface(value = EnvType.CLIENT, itf = BlockWithWorldRenderer.class)
+@EnvironmentInterface(value = EnvType.CLIENT, itf = BlockWithInventoryRenderer.class)
 public class CampFireBlock extends TemplateBlockWithEntity implements BlockWithWorldRenderer, BlockWithInventoryRenderer {
     private final Random random = new Random();
 
@@ -42,11 +47,13 @@ public class CampFireBlock extends TemplateBlockWithEntity implements BlockWithW
         this.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 0.4375F, 1.0F);
     }
 
+    @Environment(EnvType.CLIENT)
     @Override
     public boolean renderWorld(BlockRenderManager tileRenderer, BlockView tileView, int x, int y, int z) {
         return CampFireBlockRenderer.INSTANCE.renderWorldBlock(tileView, x,y,z, this, tileRenderer);
     }
 
+    @Environment(EnvType.CLIENT)
     @Override
     public void renderInventory(BlockRenderManager tileRenderer, int meta) {
         CampFireBlockRenderer.INSTANCE.renderInventoryBlock(this, tileRenderer);
