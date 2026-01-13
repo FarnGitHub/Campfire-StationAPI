@@ -3,13 +3,13 @@ package farn.campfire;
 import farn.campfire.block.CampFireBlock;
 import farn.campfire.block_entity.CampFireBlockEntity;
 import farn.campfire.block_entity.CampFireBlockEntityRenderer;
-import farn.campfire.packet.PacketUpdateCampfireItem;
 import farn.campfire.recipe.CampfireJsonRecipeManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.mine_diver.unsafeevents.listener.EventListener;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.modificationstation.stationapi.api.client.event.block.entity.BlockEntityRendererRegisterEvent;
@@ -18,15 +18,15 @@ import net.modificationstation.stationapi.api.client.texture.atlas.Atlases;
 import net.modificationstation.stationapi.api.client.texture.atlas.ExpandableAtlas;
 import net.modificationstation.stationapi.api.event.block.entity.BlockEntityRegisterEvent;
 import net.modificationstation.stationapi.api.event.init.InitFinishedEvent;
-import net.modificationstation.stationapi.api.event.network.packet.PacketRegisterEvent;
 import net.modificationstation.stationapi.api.event.recipe.RecipeRegisterEvent;
 import net.modificationstation.stationapi.api.event.registry.BlockRegistryEvent;
+import net.modificationstation.stationapi.api.event.registry.MessageListenerRegistryEvent;
 import net.modificationstation.stationapi.api.mod.entrypoint.Entrypoint;
+import net.modificationstation.stationapi.api.network.packet.MessagePacket;
 import net.modificationstation.stationapi.api.recipe.CraftingRegistry;
-import net.modificationstation.stationapi.api.registry.PacketTypeRegistry;
-import net.modificationstation.stationapi.api.registry.Registry;
 import net.modificationstation.stationapi.api.util.Namespace;
 import net.modificationstation.stationapi.api.util.Null;
+import net.modificationstation.stationapi.api.util.SideUtil;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
@@ -102,7 +102,23 @@ public class CampFireStationAPI {
     }
 
     @EventListener
-    public void registerPacket(PacketRegisterEvent event) {
-        Registry.register(PacketTypeRegistry.INSTANCE, NAMESPACE.id("Campfire_client"), PacketUpdateCampfireItem.TYPE);
+    public void registerPacket(MessageListenerRegistryEvent event) {
+        event.register(NAMESPACE.id("campfire_client"), ((playerEntity, messagePacket) -> {
+            SideUtil.run(()-> parseCampfireData(playerEntity, messagePacket),()->{});
+        }));
+    }
+
+    @Environment(EnvType.CLIENT)
+    private void parseCampfireData(PlayerEntity playerEntity, MessagePacket messagePacket) {
+        if(playerEntity.world.getBlockEntity
+                (messagePacket.ints[0],messagePacket.ints[1],messagePacket.ints[2])
+                instanceof CampFireBlockEntity campfire)
+        {
+            ItemStack[] stack = new ItemStack[4];
+            for(int index = 0; index < 4; ++index)
+                if(messagePacket.ints[3 + index] != 0)
+                    stack[index] = new ItemStack(messagePacket.ints[3 + index], 1, messagePacket.ints[3 + index + 4]);
+            campfire.cooking_food = stack;
+        }
     }
 }

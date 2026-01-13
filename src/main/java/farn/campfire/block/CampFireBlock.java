@@ -82,28 +82,30 @@ public class CampFireBlock extends TemplateBlockWithEntity implements BlockWithW
 
     @Override
     public void onBreak(World world, int x, int y, int z) {
-        CampFireBlockEntity campFire = (CampFireBlockEntity)world.getBlockEntity(x, y, z);
+        if(!world.isRemote) {
+            CampFireBlockEntity campFire = (CampFireBlockEntity)world.getBlockEntity(x, y, z);
 
-        for(int index = 0; index < campFire.size(); ++index) {
-            ItemStack stack = campFire.getStack(index);
-            if (stack != null) {
-                float veloX = this.random.nextFloat() * 0.8F + 0.1F;
-                float veloY = this.random.nextFloat() * 0.8F + 0.1F;
-                float veloZ = this.random.nextFloat() * 0.8F + 0.1F;
+            for(int index = 0; index < campFire.size(); ++index) {
+                ItemStack stack = campFire.getStack(index);
+                if (stack != null) {
+                    float veloX = this.random.nextFloat() * 0.8F + 0.1F;
+                    float veloY = this.random.nextFloat() * 0.8F + 0.1F;
+                    float veloZ = this.random.nextFloat() * 0.8F + 0.1F;
 
-                while(stack.count > 0) {
-                    int countReducer = this.random.nextInt(21) + 10;
-                    if (countReducer > stack.count) {
-                        countReducer = stack.count;
+                    while(stack.count > 0) {
+                        int countReducer = this.random.nextInt(21) + 10;
+                        if (countReducer > stack.count) {
+                            countReducer = stack.count;
+                        }
+
+                        stack.count -= countReducer;
+                        ItemEntity item = new ItemEntity(world, (double) x + veloX, (double)y + veloY, (double)z + veloZ, new ItemStack(stack.itemId, countReducer, stack.getDamage()));
+                        float offset = 0.05F;
+                        item.velocityX = this.random.nextGaussian() * offset;
+                        item.velocityY = this.random.nextGaussian() * offset + 0.2F;
+                        item.velocityZ = this.random.nextGaussian() * offset;
+                        world.spawnEntity(item);
                     }
-
-                    stack.count -= countReducer;
-                    ItemEntity item = new ItemEntity(world, (double) x + veloX, (double)y + veloY, (double)z + veloZ, new ItemStack(stack.itemId, countReducer, stack.getDamage()));
-                    float offset = 0.05F;
-                    item.velocityX = this.random.nextGaussian() * offset;
-                    item.velocityY = this.random.nextGaussian() * offset + 0.2F;
-                    item.velocityZ = this.random.nextGaussian() * offset;
-                    world.spawnEntity(item);
                 }
             }
         }

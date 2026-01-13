@@ -1,7 +1,7 @@
 package farn.campfire.block_entity;
 
+import farn.campfire.CampFireStationAPI;
 import farn.campfire.recipe.CampFireRecipeManager;
-import farn.campfire.packet.PacketUpdateCampfireItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.entity.BlockEntity;
@@ -13,22 +13,22 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.world.World;
+import net.modificationstation.stationapi.api.network.packet.MessagePacket;
 
 import java.util.Random;
 
 public class CampFireBlockEntity extends BlockEntity implements Inventory
 {
-    public ItemStack[] item = new ItemStack[4];
-    protected int[] cookingDuration = new int[item.length];
+    public ItemStack[] cooking_food = new ItemStack[4];
+    protected int[] cookingDuration = new int[cooking_food.length];
     protected static final Random rand = new Random();
-
+    private boolean init = false;
 
     //called when item is finished cooking
     public void finishCookedItem(int slotIndex) {
-        dropUnbuggedItem(CampFireRecipeManager.getResultFor(item[slotIndex]), world, x,y,z);
+        dropUnbuggedItem(CampFireRecipeManager.getResultFor(cooking_food[slotIndex]), world, x,y,z);
         removeStack(slotIndex, 1);
         cookingDuration[slotIndex] = 0;
-        this.markDirty();
     }
 
     //sometime the item bugged out and drop the glitched item that keep duplicate
@@ -55,12 +55,11 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     //insert the item inside campfire
     public boolean insertFood(ItemStack stack) {
-        if(stack == null || CampFireRecipeManager.getResultFor(stack) == null || item[item.length - 1] != null) return false;
-        for(int slotIndex = 0; slotIndex < item.length; ++slotIndex) {
-            if(item[slotIndex] == null) {
+        if(stack == null || CampFireRecipeManager.getResultFor(stack) == null || cooking_food[cooking_food.length - 1] != null) return false;
+        for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
+            if(cooking_food[slotIndex] == null) {
                 setStack(slotIndex, stack);
                 cookingDuration[slotIndex] = 0;
-                this.markDirty();
                 return true;
             }
         }
@@ -74,13 +73,13 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         super.readNbt(nbt);
         cookingDuration = nbt.getIntArray("cookedTime");
         NbtList var2 = nbt.getList("Items");
-        this.item = new ItemStack[this.size()];
+        this.cooking_food = new ItemStack[this.size()];
 
         for(int var3 = 0; var3 < var2.size(); ++var3) {
             NbtCompound var4 = (NbtCompound)var2.get(var3);
             byte var5 = var4.getByte("Slot");
-            if (var5 >= 0 && var5 < this.item.length) {
-                this.item[var5] = new ItemStack(var4);
+            if (var5 >= 0 && var5 < this.cooking_food.length) {
+                this.cooking_food[var5] = new ItemStack(var4);
             }
         }
     }
@@ -91,11 +90,11 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         nbt.put("cookedTime", cookingDuration);
         NbtList var2 = new NbtList();
 
-        for(int var3 = 0; var3 < this.item.length; ++var3) {
-            if (this.item[var3] != null) {
+        for(int var3 = 0; var3 < this.cooking_food.length; ++var3) {
+            if (this.cooking_food[var3] != null) {
                 NbtCompound var4 = new NbtCompound();
                 var4.putByte("Slot", (byte)var3);
-                this.item[var3].writeNbt(var4);
+                this.cooking_food[var3].writeNbt(var4);
                 var2.add(var4);
             }
         }
@@ -105,15 +104,15 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     @Override
     public ItemStack removeStack(int slot, int amount) {
-        if (this.item[slot] != null) {
-            if (this.item[slot].count <= amount) {
-                ItemStack var4 = this.item[slot];
-                this.item[slot] = null;
+        if (this.cooking_food[slot] != null) {
+            if (this.cooking_food[slot].count <= amount) {
+                ItemStack var4 = this.cooking_food[slot];
+                this.cooking_food[slot] = null;
                 return var4;
             } else {
-                ItemStack var3 = this.item[slot].split(amount);
-                if (this.item[slot].count == 0) {
-                    this.item[slot] = null;
+                ItemStack var3 = this.cooking_food[slot].split(amount);
+                if (this.cooking_food[slot].count == 0) {
+                    this.cooking_food[slot] = null;
                 }
 
                 return var3;
@@ -125,14 +124,26 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     @Environment(EnvType.SERVER)
     public Packet createUpdatePacket() {
-        NbtCompound newCom = new NbtCompound();
-        writeNbt(newCom);
-        return new PacketUpdateCampfireItem(x,y,z, newCom);
+        MessagePacket packet = new MessagePacket(CampFireStationAPI.NAMESPACE.id("campfire_client"));
+        packet.ints = new int[11];
+        packet.ints[0] = x;
+        packet.ints[1] = y;
+        packet.ints[2] = z;
+        for(int index = 0; index < 4; ++index) {
+            if(cooking_food[index] != null) {
+                packet.ints[3 + index] = cooking_food[index].itemId;
+                packet.ints[3 + index + 4] = cooking_food[index].getDamage();
+            } else {
+                packet.ints[3 + index] = 0;
+                packet.ints[3 + index + 4] = 0;
+            }
+        }
+        return packet;
     }
 
     @Override
     public void setStack(int slot, ItemStack stack) {
-        this.item[slot] = stack;
+        this.cooking_food[slot] = stack;
         if (stack != null && stack.count > this.getMaxCountPerStack()) {
             stack.count = this.getMaxCountPerStack();
         }
@@ -159,9 +170,11 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     @Override
     public void tick() {
+        boolean dirty = false;
         if (!this.world.isRemote) {
-            for(int slotIndex = 0; slotIndex < item.length; ++slotIndex) {
-                if(item[slotIndex] != null) {
+            for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
+                if(cooking_food[slotIndex] != null) {
+                    dirty = true;
                     if(cookingDuration[slotIndex] >= 600)
                         finishCookedItem(slotIndex);
                     else
@@ -170,15 +183,16 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
                 }
             }
         }
+        if(dirty) this.markDirty();
     }
 
     @Override
     public int size() {
-        return this.item.length;
+        return this.cooking_food.length;
     }
 
     @Override
     public ItemStack getStack(int slot) {
-        return this.item[slot];
+        return this.cooking_food[slot];
     }
 }
