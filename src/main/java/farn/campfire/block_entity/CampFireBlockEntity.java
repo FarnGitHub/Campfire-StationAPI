@@ -4,6 +4,7 @@ import farn.campfire.CampFireStationAPI;
 import farn.campfire.recipe.CampFireRecipeManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -22,7 +23,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     public ItemStack[] cooking_food = new ItemStack[4];
     protected int[] cookingDuration = new int[cooking_food.length];
     protected static final Random rand = new Random();
-    private boolean init = false;
+    private final boolean isServer = FabricLoader.getInstance().getEnvironmentType().equals(EnvType.SERVER);
 
     //called when item is finished cooking
     public void finishCookedItem(int slotIndex) {
@@ -183,7 +184,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
                 }
             }
         }
-        if(dirty) this.markDirty();
+        if(dirty && isServer) this.markDirty();
     }
 
     @Override
