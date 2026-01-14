@@ -23,7 +23,11 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     public ItemStack[] cooking_food = new ItemStack[4];
     protected int[] cookingDuration = new int[cooking_food.length];
     protected static final Random rand = new Random();
+
     private final boolean isServer = FabricLoader.getInstance().getEnvironmentType().equals(EnvType.SERVER);
+
+    //mark every item add or removed so the server sent item display to client
+    private boolean dirty = true;
 
     //called when item is finished cooking
     public void finishCookedItem(int slotIndex) {
@@ -109,13 +113,14 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
             if (this.cooking_food[slot].count <= amount) {
                 ItemStack var4 = this.cooking_food[slot];
                 this.cooking_food[slot] = null;
+                dirty = true;
                 return var4;
             } else {
                 ItemStack var3 = this.cooking_food[slot].split(amount);
                 if (this.cooking_food[slot].count == 0) {
                     this.cooking_food[slot] = null;
                 }
-
+                dirty = true;
                 return var3;
             }
         } else {
@@ -132,10 +137,10 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         packet.ints[2] = z;
         for(int index = 0; index < 4; ++index) {
             if(cooking_food[index] != null) {
-                packet.ints[3 + index] = cooking_food[index].itemId;
+                packet.ints[index + 3] = cooking_food[index].itemId;
                 packet.ints[3 + index + 4] = cooking_food[index].getDamage();
             } else {
-                packet.ints[3 + index] = 0;
+                packet.ints[index + 3] = 0;
                 packet.ints[3 + index + 4] = 0;
             }
         }
@@ -148,6 +153,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         if (stack != null && stack.count > this.getMaxCountPerStack()) {
             stack.count = this.getMaxCountPerStack();
         }
+        dirty = true;
     }
 
     @Override
@@ -171,20 +177,21 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     @Override
     public void tick() {
-        boolean dirty = false;
         if (!this.world.isRemote) {
             for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
                 if(cooking_food[slotIndex] != null) {
-                    dirty = true;
                     if(cookingDuration[slotIndex] >= 600)
                         finishCookedItem(slotIndex);
                     else
                         ++cookingDuration[slotIndex];
-
                 }
             }
         }
-        if(dirty && isServer) this.markDirty();
+
+        if(dirty && isServer) {
+            this.markDirty();
+            dirty = false;
+        }
     }
 
     @Override
