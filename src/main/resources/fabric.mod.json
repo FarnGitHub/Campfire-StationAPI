@@ -14,6 +14,9 @@
   "entrypoints": {
     "stationapi:event_bus": [
       "farn.campfire.CampFireStationAPI"
+    ],
+    "gcapi3": [
+      "farn.campfire.config.GCAPIHandler"
     ]
   },
   "mixins": [

@@ -75,9 +75,9 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
     private static final double EDGE = 0.125;
     private static final double[][] RENDER_POSITION_ITEM = new double[][] {
             { BASE_X_OFFSET, BASE_Y_OFFSET, BASE_Z_OFFSET + EDGE - ACROSS },
-            { BASE_X_OFFSET - EDGE, BASE_Y_OFFSET, BASE_Z_OFFSET },
+            { BASE_X_OFFSET - (EDGE * 0.625), BASE_Y_OFFSET, BASE_Z_OFFSET - (EDGE * 0.375) },
             { BASE_X_OFFSET - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - EDGE },
-            { BASE_X_OFFSET + EDGE - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - ACROSS } };
+            { BASE_X_OFFSET + (EDGE * 0.625) - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET + (EDGE * 0.375) - ACROSS } };
     private static final int[] RENDER_SLOT_MAPPING = new int[]{3, 0, 1, 2};
     public static double[] getRenderPositionFromRenderSlot(int renderslot)
     {

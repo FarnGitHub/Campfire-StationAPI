@@ -20,6 +20,5 @@ public abstract class PlayerManagerMixin {
         if(be instanceof CampFireBlockEntity campfire) {
             sendToAround(x,y,z, 64, campfire.world.dimension.id,campfire.createUpdatePacket());
         }
-
     }
 }

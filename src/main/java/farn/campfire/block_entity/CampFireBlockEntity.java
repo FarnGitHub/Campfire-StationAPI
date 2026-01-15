@@ -20,9 +20,9 @@ import java.util.Random;
 
 public class CampFireBlockEntity extends BlockEntity implements Inventory
 {
-    public ItemStack[] cooking_food = new ItemStack[4];
-    protected int[] cookingDuration = new int[cooking_food.length];
-    protected static final Random rand = new Random();
+    private ItemStack[] cooking_food = new ItemStack[4];
+    private int[] cookingDuration = new int[cooking_food.length];
+    private int cookingTimeLimit = CampFireStationAPI.getCookingFinishedTime();
 
     private final boolean isServer = FabricLoader.getInstance().getEnvironmentType().equals(EnvType.SERVER);
 
@@ -48,11 +48,12 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     {
         if (stack != null && stack.count > 0)
         {
+            Random rand = world.random;
             ItemEntity entityitem = new ItemEntity(world, x + rand.nextDouble() * 0.75 + 0.125, y + rand.nextDouble() * 0.375 + 0.5, z, stack);
 
-            entityitem.velocityX = rand.nextGaussian() * 0.05;
-            entityitem.velocityY = rand.nextGaussian() * 0.05 + 0.2;
-            entityitem.velocityZ = rand.nextGaussian() * 0.05;
+            entityitem.velocityX = rand.nextGaussian() * 0.025;
+            entityitem.velocityY = rand.nextGaussian() * 0.025 + 0.2;
+            entityitem.velocityZ = rand.nextGaussian() * 0.025;
 
             world.spawnEntity(entityitem);
         }
@@ -180,7 +181,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         if (!this.world.isRemote) {
             for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
                 if(cooking_food[slotIndex] != null) {
-                    if(cookingDuration[slotIndex] >= 600)
+                    if(cookingDuration[slotIndex] >= cookingTimeLimit)
                         finishCookedItem(slotIndex);
                     else
                         ++cookingDuration[slotIndex];

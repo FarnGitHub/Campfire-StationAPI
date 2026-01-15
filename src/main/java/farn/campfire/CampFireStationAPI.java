@@ -3,9 +3,11 @@ package farn.campfire;
 import farn.campfire.block.CampFireBlock;
 import farn.campfire.block_entity.CampFireBlockEntity;
 import farn.campfire.block_entity.CampFireBlockEntityRenderer;
+import farn.campfire.config.GCAPIHandler;
 import farn.campfire.recipe.CampfireJsonRecipeManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
 import net.mine_diver.unsafeevents.listener.EventListener;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -44,6 +46,8 @@ public class CampFireStationAPI {
     public static int campfire_log_lit = 0;
     public static Block campfire_block;
 
+    public static boolean hasGCAPI = false;
+
     @Environment(EnvType.CLIENT)
     @EventListener
     public void registerTextures(TextureRegisterEvent event) {
@@ -55,6 +59,7 @@ public class CampFireStationAPI {
 
     @EventListener
     public void readJsonRecipe(InitFinishedEvent event) {
+        hasGCAPI = FabricLoader.getInstance().isModLoaded("gcapi3");
         File[] theJsons = CampfireJsonRecipeManager.folderWithRecipeJson.listFiles();
         if(theJsons != null)
             for(File file : theJsons)
@@ -114,11 +119,19 @@ public class CampFireStationAPI {
                 (messagePacket.ints[0],messagePacket.ints[1],messagePacket.ints[2])
                 instanceof CampFireBlockEntity campfire)
         {
-            ItemStack[] stack = new ItemStack[4];
-            for(int index = 0; index < 4; ++index)
-                if(messagePacket.ints[3 + index] != 0)
-                    stack[index] = new ItemStack(messagePacket.ints[3 + index], 1, messagePacket.ints[3 + index + 4]);
-            campfire.cooking_food = stack;
+            for(int index = 0; index < 4; ++index) {
+                if (messagePacket.ints[index + 3] != 0)
+                    campfire.setStack(index, new ItemStack(messagePacket.ints[index + 3], 1, messagePacket.ints[index + 7]));
+                else
+                    campfire.setStack(index, null);
+            }
         }
+    }
+
+    public static int getCookingFinishedTime() {
+        if(hasGCAPI) {
+            return GCAPIHandler.instance.cookDuration;
+        }
+        return 600;
     }
 }
