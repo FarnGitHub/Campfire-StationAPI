@@ -84,7 +84,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         if(stack != null && CampFireRecipeManager.getResultFor(stack) != null) {
             for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
                 if(cooking_food[slotIndex] == null) {
-                    setStack(slotIndex, stack);
+                    setStack(slotIndex, stack.copy());
                     cookingDuration[slotIndex] = 0;
                     return true;
                 }

@@ -41,15 +41,17 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
                         GL11.glPushMatrix();
                         FarnUtil.setStaticItemRender(true);
                         GL11.glDisable(GL11.GL_BLEND);
-                        double[] position = getRenderPositionFromRenderSlot(renderSlot);
-                        GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
                         if (stack.getItem() instanceof BlockItem itemForm && BlockRenderManager.isSideLit(Block.BLOCKS[itemForm.id].getRenderType()))
                         {
+                            double[] position = getRenderPositionFromRenderSlotBlock(renderSlot);
+                            GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
                             GL11.glRotatef(renderSlot * 90, 0, 1, 0);
-                            GL11.glTranslated(-0.125, -0.01625, 0.0);
+                            GL11.glTranslated(-0.125, 0.075, 0.0);
                         }
                         else
                         {
+                            double[] position = getRenderPositionFromRenderSlot(renderSlot);
+                            GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
                             GL11.glRotatef(180, 0, 1, 1);
                             GL11.glRotatef(renderSlot * -90, 0, 0, 1);
                             GL11.glRotatef(270, 0, 0, 1);
@@ -80,10 +82,20 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
             { BASE_X_OFFSET - OFFSET_FIX_X, BASE_Y_OFFSET, BASE_Z_OFFSET - OFFSET_FIX_Z },
             { BASE_X_OFFSET - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - EDGE },
             { BASE_X_OFFSET + OFFSET_FIX_X - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET + OFFSET_FIX_Z - ACROSS } };
+    private static final double[][] RENDER_POSITION_BLOCK_ITEM = new double[][] {
+            { BASE_X_OFFSET, BASE_Y_OFFSET, BASE_Z_OFFSET + EDGE - ACROSS },
+            { BASE_X_OFFSET - EDGE, BASE_Y_OFFSET, BASE_Z_OFFSET - (EDGE * 2) },
+            { BASE_X_OFFSET - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - EDGE },
+            { BASE_X_OFFSET + EDGE - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - ACROSS + (EDGE * 2)} };
     private static final int[] RENDER_SLOT_MAPPING = new int[]{3, 0, 1, 2};
     public static double[] getRenderPositionFromRenderSlot(int renderslot)
     {
         return RENDER_POSITION_ITEM[Math.abs(renderslot) % 4];
+    }
+
+    public static double[] getRenderPositionFromRenderSlotBlock(int renderslot)
+    {
+        return RENDER_POSITION_BLOCK_ITEM[Math.abs(renderslot) % 4];
     }
 
 }

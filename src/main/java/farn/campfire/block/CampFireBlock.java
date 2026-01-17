@@ -15,6 +15,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
+import net.modificationstation.stationapi.api.StationAPI;
 import net.modificationstation.stationapi.api.client.model.block.BlockWithInventoryRenderer;
 import net.modificationstation.stationapi.api.client.model.block.BlockWithWorldRenderer;
 import net.modificationstation.stationapi.api.template.block.TemplateBlockWithEntity;
@@ -73,10 +74,7 @@ public class CampFireBlock extends TemplateBlockWithEntity implements BlockWithW
         if(!world.isRemote) {
             CampFireBlockEntity campfireEntity = (CampFireBlockEntity) world.getBlockEntity(x, y, z);
             if(campfireEntity.insertFood(player.inventory.getSelectedItem())) {
-                --player.inventory.getSelectedItem().count;
-                if(player.inventory.getSelectedItem().count <= 0) {
-                    player.inventory.removeStack(player.inventory.selectedSlot, 1);
-                }
+                player.inventory.removeStack(player.inventory.selectedSlot, 1);
             } else {
                 return false;
             }
