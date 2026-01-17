@@ -7,6 +7,7 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.world.World;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,8 +16,6 @@ import java.util.List;
 public class CampfireSmokeEffect extends Particle {
     public static final int TEXTURE_COUNT = 12;
     public static final String[] TEXTURES = new String[TEXTURE_COUNT];
-    private static final List<CampfireSmokeEffect> campfireSmokeParticles = new ArrayList<>();
-
     static
     {
         for (int i = 0; i < TEXTURE_COUNT; i++)
@@ -54,9 +53,10 @@ public class CampfireSmokeEffect extends Particle {
         float partialPosY = (float) (prevY + (y - prevY) * partialTicks - interpY);
         float partialPosZ = (float) (prevZ + (z - prevZ) * partialTicks - interpZ);
 
-        float scalePar = 0.1F * scale;
         Minecraft.INSTANCE.textureManager.bindTexture(Minecraft.INSTANCE.textureManager.getTextureId(TEXTURES[this.texIndex % TEXTURES.length]));
-        tess.color(red, green, blue);
+        float scalePar = 0.1F * scale;
+        float light = this.getBrightnessAtEyes(1.0F);
+        tess.color(red * light, green * light, blue * light, 0.25F);
         tess.vertex(partialPosX - rotX * scalePar - rotYZ * scalePar, partialPosY - rotXZ * scalePar, partialPosZ - rotZ * scalePar - rotXY * scalePar, 1, 1);
         tess.vertex(partialPosX - rotX * scalePar + rotYZ * scalePar, partialPosY + rotXZ * scalePar, partialPosZ - rotZ * scalePar + rotXY * scalePar, 1, 0);
         tess.vertex(partialPosX + rotX * scalePar + rotYZ * scalePar, partialPosY + rotXZ * scalePar, partialPosZ + rotZ * scalePar + rotXY * scalePar, 0, 0);
