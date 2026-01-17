@@ -1,11 +1,15 @@
 package farn.campfire.block_entity;
 
 import farn.campfire.CampFireStationAPI;
+import farn.campfire.particle.CampfireSmokeEffect;
 import farn.campfire.recipe.CampFireRecipeManager;
+import farn.farn_util.FarnUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.particle.FireSmokeParticle;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
@@ -15,6 +19,7 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.world.World;
 import net.modificationstation.stationapi.api.network.packet.MessagePacket;
+import net.modificationstation.stationapi.api.util.SideUtil;
 
 import java.util.Random;
 
@@ -30,17 +35,32 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     private boolean dirty = true;
 
     //called when item is finished cooking
-    public void finishCookedItem(int slotIndex) {
-        dropUnbuggedItem(CampFireRecipeManager.getResultFor(cooking_food[slotIndex]), world, x,y,z);
-        removeStack(slotIndex, 1);
-        cookingDuration[slotIndex] = 0;
+    public void finishCookedFood(int slotIndex) {
+        if(cooking_food[slotIndex] != null) {
+            ItemStack stack = CampFireRecipeManager.getResultFor(cooking_food[slotIndex]);
+            if(stack == null) {
+                stack = cooking_food[slotIndex];
+            }
+            dropUnbuggedItem(stack, world, x,y,z);
+            removeStack(slotIndex, 1);
+            cookingDuration[slotIndex] = 0;
+        }
+    }
+
+    @Environment(EnvType.CLIENT)
+    private void renderParticle()
+    {
+        if (world.random.nextFloat() < 0.11F)
+        {
+            for (int i = 0; i < world.random.nextInt(2) + 2; ++i)
+                FarnUtil.addParticle(new CampfireSmokeEffect(world, x, y, z));
+        }
     }
 
     //sometime the item bugged out and drop the glitched item that keep duplicate
     public static void dropUnbuggedItem(ItemStack stack, World world, int x, int y, int z)
     {
-        ItemStack newStack = new ItemStack(stack.itemId, 1, stack.getDamage());
-        dropItem(newStack, world, x, y, z);
+        dropItem(new ItemStack(stack.itemId, 1, stack.getDamage()), world, x, y, z);
     }
 
     //normal item drooped
@@ -61,12 +81,13 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 
     //insert the item inside campfire
     public boolean insertFood(ItemStack stack) {
-        if(stack == null || CampFireRecipeManager.getResultFor(stack) == null || cooking_food[cooking_food.length - 1] != null) return false;
-        for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
-            if(cooking_food[slotIndex] == null) {
-                setStack(slotIndex, stack);
-                cookingDuration[slotIndex] = 0;
-                return true;
+        if(stack != null && CampFireRecipeManager.getResultFor(stack) != null) {
+            for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
+                if(cooking_food[slotIndex] == null) {
+                    setStack(slotIndex, stack);
+                    cookingDuration[slotIndex] = 0;
+                    return true;
+                }
             }
         }
         return false;
@@ -179,19 +200,25 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     @Override
     public void tick() {
         if (!this.world.isRemote) {
-            for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
-                if(cooking_food[slotIndex] != null) {
-                    if(cookingDuration[slotIndex] >= cookingTimeLimit)
-                        finishCookedItem(slotIndex);
-                    else
-                        ++cookingDuration[slotIndex];
+            if(getPushedBlockData() == 0) {
+                for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
+                    if(cooking_food[slotIndex] != null) {
+                        if(cookingDuration[slotIndex] >= cookingTimeLimit)
+                            finishCookedFood(slotIndex);
+                        else
+                            ++cookingDuration[slotIndex];
+                    }
                 }
             }
         }
 
-        if(dirty && isServer) {
-            this.markDirty();
-            dirty = false;
+        if(isServer) {
+            if(dirty) {
+                this.markDirty();
+                dirty = false;
+            }
+        } else if(CampFireStationAPI.shouldRenderSmoke()) {
+            renderParticle();
         }
     }
 

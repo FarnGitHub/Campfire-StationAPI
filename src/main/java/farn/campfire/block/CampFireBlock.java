@@ -72,9 +72,10 @@ public class CampFireBlock extends TemplateBlockWithEntity implements BlockWithW
     public boolean onUse(World world, int x, int y, int z, PlayerEntity player) {
         if(!world.isRemote) {
             CampFireBlockEntity campfireEntity = (CampFireBlockEntity) world.getBlockEntity(x, y, z);
-            if(campfireEntity.insertFood(player.inventory.getSelectedItem())) {
+            if(campfireEntity.insertFood(player.inventory.getSelectedItem()))
                 player.inventory.removeStack(player.inventory.selectedSlot, 1);
-            }
+            else
+                return false;
         }
         return true;
     }

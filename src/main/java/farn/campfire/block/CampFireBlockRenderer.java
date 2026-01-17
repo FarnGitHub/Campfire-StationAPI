@@ -2,6 +2,7 @@ package farn.campfire.block;
 
 import javax.annotation.Nullable;
 
+import farn.campfire.block_entity.CampFireBlockEntity;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.block.BlockRenderManager;
@@ -65,7 +66,7 @@ public class CampFireBlockRenderer
             b = anab;
         }
 
-        final boolean isLit = true;
+        boolean isLit = true;
         final boolean northSouth = !(meta == 4 || meta == 5);
         // sideLogY: 3 pixels, from the ground to the bottom face of the upper logs
         // logY1: 4 pixels, from the ground to top face of the lower logs

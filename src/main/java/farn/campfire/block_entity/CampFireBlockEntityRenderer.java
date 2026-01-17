@@ -1,5 +1,6 @@
 package farn.campfire.block_entity;
 
+import farn.farn_util.FarnUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.render.block.BlockRenderManager;
@@ -15,7 +16,6 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
 {
 
     protected ItemEntity[] invRender = new ItemEntity[4];
-    public static boolean renderOnCampfire = false;
 
     @Override
     public void render(BlockEntity tile, double x, double y, double z, float scale)
@@ -39,7 +39,7 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
                         else
                             invRender[slot].setWorld(ctile.world);
                         GL11.glPushMatrix();
-                        renderOnCampfire = true;
+                        FarnUtil.setStaticItemRender(true);
                         GL11.glDisable(GL11.GL_BLEND);
                         double[] position = getRenderPositionFromRenderSlot(renderSlot);
                         GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
@@ -57,7 +57,7 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
                         GL11.glScalef(0.625F, 0.625F, 0.625F);
                         invRender[slot].minBrightness = 1.0F;
                         EntityRenderDispatcher.INSTANCE.render(invRender[slot], 0, 0, 0, 0.0F, 0.0F);
-                        renderOnCampfire = false;
+                        FarnUtil.setStaticItemRender(false);
                         GL11.glPopMatrix();
                     } else {
                         invRender[slot] = null;
@@ -73,11 +73,13 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
     private static final double BASE_Z_OFFSET = 0.9375;
     private static final double ACROSS = 0.875;
     private static final double EDGE = 0.125;
+    private static final double OFFSET_FIX_X = EDGE * 0.625;
+    private static final double OFFSET_FIX_Z = EDGE * 0.375;
     private static final double[][] RENDER_POSITION_ITEM = new double[][] {
             { BASE_X_OFFSET, BASE_Y_OFFSET, BASE_Z_OFFSET + EDGE - ACROSS },
-            { BASE_X_OFFSET - (EDGE * 0.625), BASE_Y_OFFSET, BASE_Z_OFFSET - (EDGE * 0.375) },
+            { BASE_X_OFFSET - OFFSET_FIX_X, BASE_Y_OFFSET, BASE_Z_OFFSET - OFFSET_FIX_Z },
             { BASE_X_OFFSET - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - EDGE },
-            { BASE_X_OFFSET + (EDGE * 0.625) - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET + (EDGE * 0.375) - ACROSS } };
+            { BASE_X_OFFSET + OFFSET_FIX_X - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET + OFFSET_FIX_Z - ACROSS } };
     private static final int[] RENDER_SLOT_MAPPING = new int[]{3, 0, 1, 2};
     public static double[] getRenderPositionFromRenderSlot(int renderslot)
     {

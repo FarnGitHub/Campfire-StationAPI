@@ -10,5 +10,8 @@ public class GCAPIHandler {
     public static class Instance {
         @ConfigEntry(name="Cooking Duration", maxValue = Integer.MAX_VALUE, minValue = 20, multiplayerSynced = true)
         public Integer cookDuration = 600;
+
+        @ConfigEntry(name="Campfire's Smoke", maxValue = Integer.MAX_VALUE, minValue = 20)
+        public Boolean smoke = true;
     }
 }

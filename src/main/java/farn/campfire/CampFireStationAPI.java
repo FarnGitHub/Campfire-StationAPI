@@ -134,4 +134,11 @@ public class CampFireStationAPI {
         }
         return 600;
     }
+
+    public static boolean shouldRenderSmoke() {
+        if(hasGCAPI) {
+            return GCAPIHandler.instance.smoke;
+        }
+        return true;
+    }
 }
