@@ -1,5 +1,6 @@
 package farn.campfire.particle;
 
+import farn.farn_util.api.ParticleDisableQuadDraw;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -7,13 +8,11 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.world.World;
+import net.modificationstation.stationapi.api.util.math.MathHelper;
 import org.lwjgl.opengl.GL11;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Environment(EnvType.CLIENT)
-public class CampfireSmokeEffect extends Particle {
+public class CampfireSmokeEffect extends Particle implements ParticleDisableQuadDraw {
     public static final int TEXTURE_COUNT = 12;
     public static final String[] TEXTURES = new String[TEXTURE_COUNT];
     static
@@ -23,6 +22,7 @@ public class CampfireSmokeEffect extends Particle {
     }
 
     protected final int texIndex;
+    private float particleAlpha = 0.65F;
 
     public CampfireSmokeEffect(World world, int x, int y, int z)
     {
@@ -48,19 +48,27 @@ public class CampfireSmokeEffect extends Particle {
         double interpX = view.lastTickX + (view.x - view.lastTickX) * partialTicks;
         double interpY = view.lastTickY + (view.y - view.lastTickY) * partialTicks;
         double interpZ = view.lastTickZ + (view.z - view.lastTickZ) * partialTicks;
-
         float partialPosX = (float) (prevX + (x - prevX) * partialTicks - interpX);
         float partialPosY = (float) (prevY + (y - prevY) * partialTicks - interpY);
         float partialPosZ = (float) (prevZ + (z - prevZ) * partialTicks - interpZ);
-
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glDepthMask(false);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glAlphaFunc(GL11.GL_GREATER, 0.003921569F);
         Minecraft.INSTANCE.textureManager.bindTexture(Minecraft.INSTANCE.textureManager.getTextureId(TEXTURES[this.texIndex % TEXTURES.length]));
         float scalePar = 0.1F * scale;
         float light = this.getBrightnessAtEyes(1.0F);
-        tess.color(red * light, green * light, blue * light, 0.25F);
+        tess.startQuads();
+        tess.color(red * light, green * light, blue * light, particleAlpha);
         tess.vertex(partialPosX - rotX * scalePar - rotYZ * scalePar, partialPosY - rotXZ * scalePar, partialPosZ - rotZ * scalePar - rotXY * scalePar, 1, 1);
         tess.vertex(partialPosX - rotX * scalePar + rotYZ * scalePar, partialPosY + rotXZ * scalePar, partialPosZ - rotZ * scalePar + rotXY * scalePar, 1, 0);
         tess.vertex(partialPosX + rotX * scalePar + rotYZ * scalePar, partialPosY + rotXZ * scalePar, partialPosZ + rotZ * scalePar + rotXY * scalePar, 0, 0);
         tess.vertex(partialPosX + rotX * scalePar - rotYZ * scalePar, partialPosY - rotXZ * scalePar, partialPosZ + rotZ * scalePar - rotXY * scalePar, 0, 1);
+        tess.draw();
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glDepthMask(true);
+        GL11.glAlphaFunc(GL11.GL_GREATER, 0.1F);
     }
 
     @Override
@@ -75,6 +83,10 @@ public class CampfireSmokeEffect extends Particle {
         this.prevX = this.x;
         this.prevY = this.y;
         this.prevZ = this.z;
+
+        if (this.particleAge++ >= this.maxParticleAge - 60) {
+            this.particleAlpha = MathHelper.clamp(this.particleAlpha - 0.025F, 0.0F, 1.0F);
+        }
 
         if (this.particleAge++ >= this.maxParticleAge) {
             this.markDead();

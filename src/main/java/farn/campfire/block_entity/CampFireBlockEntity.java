@@ -1,6 +1,7 @@
 package farn.campfire.block_entity;
 
 import farn.campfire.CampFireStationAPI;
+import farn.campfire.CampfireFarnUtilCompat;
 import farn.campfire.particle.CampfireSmokeEffect;
 import farn.campfire.recipe.CampFireRecipeManager;
 import farn.farn_util.FarnUtil;
@@ -50,10 +51,11 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     @Environment(EnvType.CLIENT)
     private void renderParticle()
     {
+        if(!CampFireStationAPI.hasFarnUtil) return;
         if (world.random.nextFloat() < 0.11F)
         {
             for (int i = 0; i < world.random.nextInt(2) + 2; ++i)
-                FarnUtil.addParticle(new CampfireSmokeEffect(world, x, y, z));
+                CampfireFarnUtilCompat.addParticle(new CampfireSmokeEffect(world, x, y, z));
         }
     }
 

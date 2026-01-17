@@ -47,6 +47,7 @@ public class CampFireStationAPI {
     public static Block campfire_block;
 
     public static boolean hasGCAPI = false;
+    public static boolean hasFarnUtil = false;
 
     @Environment(EnvType.CLIENT)
     @EventListener
@@ -60,6 +61,7 @@ public class CampFireStationAPI {
     @EventListener
     public void readJsonRecipe(InitFinishedEvent event) {
         hasGCAPI = FabricLoader.getInstance().isModLoaded("gcapi3");
+        hasFarnUtil = FabricLoader.getInstance().isModLoaded("farn_util");
         File[] theJsons = CampfireJsonRecipeManager.folderWithRecipeJson.listFiles();
         if(theJsons != null)
             for(File file : theJsons)
