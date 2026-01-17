@@ -19,6 +19,7 @@
       "farn.campfire.config.GCAPIHandler"
     ]
   },
+  "mixins": ["campfire.mixins.json"],
   "accessWidener": "campfire.accessWidener",
   "depends": {
     "minecraft": "1.0.0-beta.7.3",
