@@ -197,7 +197,7 @@ dependencies {
 
     // TODO: babric2ornithe - could not parse this mod dependency
     modImplementation("maven.modrinth:3d-dropped-item-stationapi:1.3-gen2-b1.7.3")
-    modImplementation("maven.modrinth:farnutil:3.2-beta2-b1.7.3")
+    modImplementation("maven.modrinth:farnutil:3.2-beta3-b1.7.3")
 
     // TODO: babric2ornithe - verify this dependency is available for ornithe
     // modRuntimeOnly("maven.modrinth:fast-stapi-intro:2.0.0-b1.7.3") {
