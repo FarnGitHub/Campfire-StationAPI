@@ -1,7 +1,6 @@
 package farn.campfire.block_entity;
 
-import farn.campfire.CampFireStationAPI;
-import farn.campfire.CampfireFarnUtilCompat;
+import farn.farn_util.api.static_item.StaticItemRendererAPI;
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.render.block.BlockRenderManager;
@@ -21,7 +20,6 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
     @Override
     public void render(BlockEntity tile, double x, double y, double z, float scale)
     {
-        if(!CampFireStationAPI.hasFarnUtil) return;
         try {
             if (tile instanceof CampFireBlockEntity ctile)
             {
@@ -41,7 +39,7 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
                         else
                             invRender[slot].setWorld(ctile.world);
                         GL11.glPushMatrix();
-                        CampfireFarnUtilCompat.setStaticItemRenderer(true);
+                        StaticItemRendererAPI.setStaticItemRender(true);
                         GL11.glDisable(GL11.GL_BLEND);
                         if (stack.getItem() instanceof BlockItem itemForm && BlockRenderManager.isSideLit(Block.BLOCKS[itemForm.id].getRenderType()))
                         {
@@ -61,7 +59,7 @@ public class CampFireBlockEntityRenderer extends BlockEntityRenderer
                         GL11.glScalef(0.625F, 0.625F, 0.625F);
                         invRender[slot].minBrightness = 1.0F;
                         EntityRenderDispatcher.INSTANCE.render(invRender[slot], 0, 0, 0, 0.0F, 0.0F);
-                        CampfireFarnUtilCompat.setStaticItemRenderer(false);
+                        StaticItemRendererAPI.setStaticItemRender(false);
                         GL11.glPopMatrix();
                     } else {
                         invRender[slot] = null;

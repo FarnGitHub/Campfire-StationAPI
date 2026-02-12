@@ -1,6 +1,6 @@
 package farn.campfire.particle;
 
-import farn.farn_util.api.ParticleDisableQuadDraw;
+import farn.farn_util.api.particle.ParticleDisableQuadDraw;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -51,14 +51,9 @@ public class CampfireSmokeEffect extends Particle implements ParticleDisableQuad
         float partialPosX = (float) (prevX + (x - prevX) * partialTicks - interpX);
         float partialPosY = (float) (prevY + (y - prevY) * partialTicks - interpY);
         float partialPosZ = (float) (prevZ + (z - prevZ) * partialTicks - interpZ);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glDepthMask(false);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glAlphaFunc(GL11.GL_GREATER, 0.003921569F);
-        Minecraft.INSTANCE.textureManager.bindTexture(Minecraft.INSTANCE.textureManager.getTextureId(TEXTURES[this.texIndex % TEXTURES.length]));
         float scalePar = 0.1F * scale;
         float light = this.getBrightnessAtEyes(1.0F);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, Minecraft.INSTANCE.textureManager.getTextureId(TEXTURES[this.texIndex % TEXTURES.length]));
         tess.startQuads();
         tess.color(red * light, green * light, blue * light, particleAlpha);
         tess.vertex(partialPosX - rotX * scalePar - rotYZ * scalePar, partialPosY - rotXZ * scalePar, partialPosZ - rotZ * scalePar - rotXY * scalePar, 1, 1);
@@ -66,9 +61,6 @@ public class CampfireSmokeEffect extends Particle implements ParticleDisableQuad
         tess.vertex(partialPosX + rotX * scalePar + rotYZ * scalePar, partialPosY + rotXZ * scalePar, partialPosZ + rotZ * scalePar + rotXY * scalePar, 0, 0);
         tess.vertex(partialPosX + rotX * scalePar - rotYZ * scalePar, partialPosY - rotXZ * scalePar, partialPosZ + rotZ * scalePar - rotXY * scalePar, 0, 1);
         tess.draw();
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glDepthMask(true);
-        GL11.glAlphaFunc(GL11.GL_GREATER, 0.1F);
     }
 
     @Override
@@ -84,11 +76,13 @@ public class CampfireSmokeEffect extends Particle implements ParticleDisableQuad
         this.prevY = this.y;
         this.prevZ = this.z;
 
-        if (this.particleAge++ >= this.maxParticleAge - 60) {
+        ++particleAge;
+
+        if (this.particleAge >= this.maxParticleAge - 60) {
             this.particleAlpha = MathHelper.clamp(this.particleAlpha - 0.025F, 0.0F, 1.0F);
         }
 
-        if (this.particleAge++ >= this.maxParticleAge) {
+        if (this.particleAge >= this.maxParticleAge || this.particleAlpha < 0.15) {
             this.markDead();
         } else {
             this.velocityY -= this.gravityStrength;

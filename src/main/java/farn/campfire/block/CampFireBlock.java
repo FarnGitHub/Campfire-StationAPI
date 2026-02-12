@@ -2,30 +2,30 @@ package farn.campfire.block;
 
 import farn.campfire.CampFireStationAPI;
 import farn.campfire.block_entity.CampFireBlockEntity;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.api.EnvironmentInterface;
+import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
-import net.modificationstation.stationapi.api.StationAPI;
-import net.modificationstation.stationapi.api.client.model.block.BlockWithInventoryRenderer;
-import net.modificationstation.stationapi.api.client.model.block.BlockWithWorldRenderer;
+import net.modificationstation.stationapi.api.block.BlockState;
+import net.modificationstation.stationapi.api.item.ItemPlacementContext;
+import net.modificationstation.stationapi.api.state.StateManager;
+import net.modificationstation.stationapi.api.state.property.Properties;
 import net.modificationstation.stationapi.api.template.block.TemplateBlockWithEntity;
 import net.modificationstation.stationapi.api.util.Identifier;
+import net.modificationstation.stationapi.api.util.math.Direction;
 
+import java.util.List;
 import java.util.Random;
 
-@EnvironmentInterface(value = EnvType.CLIENT, itf = BlockWithWorldRenderer.class)
-@EnvironmentInterface(value = EnvType.CLIENT, itf = BlockWithInventoryRenderer.class)
-public class CampFireBlock extends TemplateBlockWithEntity implements BlockWithWorldRenderer, BlockWithInventoryRenderer {
+public class CampFireBlock extends TemplateBlockWithEntity {
 
     public CampFireBlock(Identifier identifier, Material material) {
         super(identifier, material);
@@ -38,29 +38,17 @@ public class CampFireBlock extends TemplateBlockWithEntity implements BlockWithW
         return Box.createCached(x, y, z, x + 1.0F, y + 0.4375F, z + 1.0F);
     }
 
-    @Override
-    public int getTexture(int side, int meta) {
-        return meta == -2 ? CampFireStationAPI.campfire_log_lit : (meta == -3 ? CampFireStationAPI.campfire_fire : CampFireStationAPI.campfire_log);
-    }
-
     public void updateBoundingBox(BlockView blockView, int x, int y, int z) {
         this.setBoundingBox(0.0F, 0.0F, 0.0F, 1.0F, 0.4375F, 1.0F);
     }
 
-    @Environment(EnvType.CLIENT)
-    @Override
-    public boolean renderWorld(BlockRenderManager tileRenderer, BlockView tileView, int x, int y, int z) {
-        return CampFireBlockRenderer.INSTANCE.renderWorldBlock(tileView, x,y,z, this, tileRenderer);
-    }
-
-    @Environment(EnvType.CLIENT)
-    @Override
-    public void renderInventory(BlockRenderManager tileRenderer, int meta) {
-        CampFireBlockRenderer.INSTANCE.renderInventoryBlock(this, tileRenderer);
-    }
-
     @Override
     public boolean isOpaque() {
+        return false;
+    }
+
+    @Override
+    public boolean isFullCube() {
         return false;
     }
 
@@ -116,15 +104,20 @@ public class CampFireBlock extends TemplateBlockWithEntity implements BlockWithW
         super.onBreak(world, x, y, z);
     }
 
-    public int getDroppedItemCount(Random random) {
-        return 2;
+    @Override
+    public void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        builder.add(Properties.HORIZONTAL_FACING);
     }
 
-    protected int getDroppedItemMeta(int blockMeta) {
-        return 1;
+    @Override
+    public BlockState getPlacementState(ItemPlacementContext context) {
+        Direction direction = context.getHorizontalPlayerFacing().rotateClockwise(Direction.Axis.Y);
+
+        return getDefaultState().with(Properties.HORIZONTAL_FACING, direction);
     }
 
-    public int getDroppedItemId(int blockMeta, Random random) {
-        return Item.COAL.id;
+    @Override
+    public List<ItemStack> getDropList(World world, int x, int y, int z, BlockState state, int meta) {
+        return List.of(new ItemStack(Item.COAL.id, 2, 1));
     }
 }

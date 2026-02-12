@@ -1,9 +1,9 @@
-package farn.campfire.config;
+package farn.campfire.listener;
 
 import net.glasslauncher.mods.gcapi3.api.ConfigEntry;
 import net.glasslauncher.mods.gcapi3.api.ConfigRoot;
 
-public class GCAPIHandler {
+public class CampFireGlassConfig {
     @ConfigRoot(value="campfire_config", visibleName="Campfire Configuration")
     public static final Instance instance = new Instance();
 

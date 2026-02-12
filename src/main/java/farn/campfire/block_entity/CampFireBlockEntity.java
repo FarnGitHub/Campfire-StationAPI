@@ -1,16 +1,13 @@
 package farn.campfire.block_entity;
 
 import farn.campfire.CampFireStationAPI;
-import farn.campfire.CampfireFarnUtilCompat;
 import farn.campfire.particle.CampfireSmokeEffect;
 import farn.campfire.recipe.CampFireRecipeManager;
-import farn.farn_util.FarnUtil;
+import farn.farn_util.api.particle.ParticleAPI;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.FireSmokeParticle;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
@@ -20,7 +17,6 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.world.World;
 import net.modificationstation.stationapi.api.network.packet.MessagePacket;
-import net.modificationstation.stationapi.api.util.SideUtil;
 
 import java.util.Random;
 
@@ -28,21 +24,18 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
 {
     private ItemStack[] cooking_food = new ItemStack[4];
     private int[] cookingDuration = new int[cooking_food.length];
-    private int cookingTimeLimit = CampFireStationAPI.getCookingFinishedTime();
+    private final int cookingTimeLimit = CampFireStationAPI.getCookingFinishedTime();
 
     private final boolean isServer = FabricLoader.getInstance().getEnvironmentType().equals(EnvType.SERVER);
 
-    //mark every item add or removed so the server sent item display to client
-    private boolean dirty = true;
 
     //called when item is finished cooking
     public void finishCookedFood(int slotIndex) {
         if(cooking_food[slotIndex] != null) {
             ItemStack stack = CampFireRecipeManager.getResultFor(cooking_food[slotIndex]);
-            if(stack == null) {
+            if(stack == null)
                 stack = cooking_food[slotIndex];
-            }
-            dropUnbuggedItem(stack, world, x,y,z);
+            dropItem(stack.copy(), world, x,y,z);
             removeStack(slotIndex, 1);
             cookingDuration[slotIndex] = 0;
         }
@@ -51,18 +44,11 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     @Environment(EnvType.CLIENT)
     private void renderParticle()
     {
-        if(!CampFireStationAPI.hasFarnUtil) return;
         if (world.random.nextFloat() < 0.11F)
         {
             for (int i = 0; i < world.random.nextInt(2) + 2; ++i)
-                CampfireFarnUtilCompat.addParticle(new CampfireSmokeEffect(world, x, y, z));
+                ParticleAPI.addParticle(new CampfireSmokeEffect(world, x, y, z));
         }
-    }
-
-    //sometime the item bugged out and drop the glitched item that keep duplicate
-    public static void dropUnbuggedItem(ItemStack stack, World world, int x, int y, int z)
-    {
-        dropItem(new ItemStack(stack.itemId, 1, stack.getDamage()), world, x, y, z);
     }
 
     //normal item drooped
@@ -137,14 +123,14 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
             if (this.cooking_food[slot].count <= amount) {
                 ItemStack var4 = this.cooking_food[slot];
                 this.cooking_food[slot] = null;
-                dirty = true;
+                markDirty();
                 return var4;
             } else {
                 ItemStack var3 = this.cooking_food[slot].split(amount);
                 if (this.cooking_food[slot].count == 0) {
                     this.cooking_food[slot] = null;
                 }
-                dirty = true;
+                markDirty();
                 return var3;
             }
         } else {
@@ -155,6 +141,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     @Environment(EnvType.SERVER)
     public Packet createUpdatePacket() {
         MessagePacket packet = new MessagePacket(CampFireStationAPI.NAMESPACE.id("campfire_client"));
+        packet.worldPacket = true;
         packet.ints = new int[11];
         packet.ints[0] = x;
         packet.ints[1] = y;
@@ -177,7 +164,7 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
         if (stack != null && stack.count > this.getMaxCountPerStack()) {
             stack.count = this.getMaxCountPerStack();
         }
-        dirty = true;
+        markDirty();
     }
 
     @Override
@@ -202,26 +189,28 @@ public class CampFireBlockEntity extends BlockEntity implements Inventory
     @Override
     public void tick() {
         if (!this.world.isRemote) {
-            if(getPushedBlockData() == 0) {
-                for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
-                    if(cooking_food[slotIndex] != null) {
-                        if(cookingDuration[slotIndex] >= cookingTimeLimit)
-                            finishCookedFood(slotIndex);
-                        else
-                            ++cookingDuration[slotIndex];
-                    }
+            for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
+                if(cooking_food[slotIndex] != null) {
+                    if(cookingDuration[slotIndex] >= cookingTimeLimit)
+                        finishCookedFood(slotIndex);
+                    else
+                        ++cookingDuration[slotIndex];
                 }
             }
         }
 
-        if(isServer) {
-            if(dirty) {
-                this.markDirty();
-                dirty = false;
-            }
-        } else if(CampFireStationAPI.shouldRenderSmoke()) {
+        if(!isServer && CampFireStationAPI.shouldRenderSmoke()) {
             renderParticle();
         }
+    }
+
+    @Environment(EnvType.SERVER)
+    public void markDirty() {
+        super.markDirty();
+        if(world != null)
+            CampFireStationAPI.getServer().
+                    playerManager.sendToAround
+                            (x,y,z, 64, world.dimension.id, createUpdatePacket());
     }
 
     @Override

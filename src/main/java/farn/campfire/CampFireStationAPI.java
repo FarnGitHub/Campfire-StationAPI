@@ -3,7 +3,7 @@ package farn.campfire;
 import farn.campfire.block.CampFireBlock;
 import farn.campfire.block_entity.CampFireBlockEntity;
 import farn.campfire.block_entity.CampFireBlockEntityRenderer;
-import farn.campfire.config.GCAPIHandler;
+import farn.campfire.listener.CampFireGlassConfig;
 import farn.campfire.recipe.CampfireJsonRecipeManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -14,6 +14,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
 import net.modificationstation.stationapi.api.client.event.block.entity.BlockEntityRendererRegisterEvent;
 import net.modificationstation.stationapi.api.client.event.texture.TextureRegisterEvent;
 import net.modificationstation.stationapi.api.client.texture.atlas.Atlases;
@@ -47,7 +48,6 @@ public class CampFireStationAPI {
     public static Block campfire_block;
 
     public static boolean hasGCAPI = false;
-    public static boolean hasFarnUtil = false;
 
     @Environment(EnvType.CLIENT)
     @EventListener
@@ -61,7 +61,6 @@ public class CampFireStationAPI {
     @EventListener
     public void readJsonRecipe(InitFinishedEvent event) {
         hasGCAPI = FabricLoader.getInstance().isModLoaded("gcapi3");
-        hasFarnUtil = FabricLoader.getInstance().isModLoaded("farn_util");
         File[] theJsons = CampfireJsonRecipeManager.folderWithRecipeJson.listFiles();
         if(theJsons != null)
             for(File file : theJsons)
@@ -130,16 +129,21 @@ public class CampFireStationAPI {
         }
     }
 
+    @Environment(EnvType.SERVER)
+    public static MinecraftServer getServer() {
+        return (MinecraftServer) FabricLoader.getInstance().getGameInstance();
+    }
+
     public static int getCookingFinishedTime() {
         if(hasGCAPI) {
-            return GCAPIHandler.instance.cookDuration;
+            return CampFireGlassConfig.instance.cookDuration;
         }
         return 600;
     }
 
     public static boolean shouldRenderSmoke() {
         if(hasGCAPI) {
-            return GCAPIHandler.instance.smoke;
+            return CampFireGlassConfig.instance.smoke;
         }
         return true;
     }

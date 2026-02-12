@@ -5,7 +5,9 @@ import farn.campfire.CampFireStationAPI;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.modificationstation.stationapi.api.StationAPI;
 import net.modificationstation.stationapi.api.registry.ItemRegistry;
+import net.modificationstation.stationapi.api.resource.ResourceFinder;
 import net.modificationstation.stationapi.api.util.Identifier;
 
 import java.io.File;

@@ -16,13 +16,16 @@
       "farn.campfire.CampFireStationAPI"
     ],
     "gcapi3": [
-      "farn.campfire.config.GCAPIHandler"
+      "farn.campfire.listener.CampFireGlassConfig"
+    ],
+    "bhcreative:event_bus": [
+      "farn.campfire.listener.CampFireBHCreative"
     ]
   },
-  "mixins": ["campfire.mixins.json"],
   "accessWidener": "campfire.accessWidener",
   "depends": {
     "minecraft": "1.0.0-beta.7.3",
-    "stationapi": "*"
+    "stationapi": "*",
+    "farn_util": "*"
   }
 }
