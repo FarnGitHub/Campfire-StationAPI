@@ -1,0 +1,245 @@
+package farn.campfire.block_entity;
+
+import farn.campfire.CampFireStationAPI;
+import farn.campfire.packet.CampfireUpdatePacket;
+import farn.campfire.particle.CampfireSmokeEffect;
+import farn.campfire.recipe.CampFireRecipeManager;
+import farn.farn_util.api.particle.ParticleAPI;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.world.World;
+import net.modificationstation.stationapi.api.network.packet.MessagePacket;
+
+import java.util.Random;
+
+public class CampFireBlockEntity extends BlockEntity implements Inventory
+{
+    private ItemStack[] cooking_food = new ItemStack[4];
+    private int[] cookingDuration = new int[cooking_food.length];
+    private final int cookingTimeLimit = CampFireStationAPI.getCookingFinishedTime();
+
+    private final boolean isServer = FabricLoader.getInstance().getEnvironmentType().equals(EnvType.SERVER);
+
+
+    //called when item is finished cooking
+    public void finishCookedFood(int slotIndex) {
+        if(cooking_food[slotIndex] != null) {
+            ItemStack stack = CampFireRecipeManager.getResultFor(cooking_food[slotIndex]);
+            if(stack == null)
+                stack = cooking_food[slotIndex];
+            dropItem(stack.copy(), world, x,y,z);
+            removeStack(slotIndex, 1);
+            cookingDuration[slotIndex] = 0;
+        }
+    }
+
+    @Environment(EnvType.CLIENT)
+    private void renderParticle()
+    {
+        if (world.random.nextFloat() < 0.11F)
+        {
+            for (int i = 0; i < world.random.nextInt(2) + 2; ++i)
+                ParticleAPI.addParticle(new CampfireSmokeEffect(world, x, y, z));
+        }
+    }
+
+    //normal item drooped
+    public static void dropItem(ItemStack stack, World world, int x, int y, int z)
+    {
+        if (stack != null && stack.count > 0)
+        {
+            Random rand = world.random;
+            ItemEntity entityitem = new ItemEntity(world, x + rand.nextDouble() * 0.75 + 0.125, y + rand.nextDouble() * 0.375 + 0.5, z, stack);
+
+            entityitem.velocityX = rand.nextGaussian() * 0.025;
+            entityitem.velocityY = rand.nextGaussian() * 0.025 + 0.2;
+            entityitem.velocityZ = rand.nextGaussian() * 0.025;
+
+            world.spawnEntity(entityitem);
+        }
+    }
+
+    //insert the item inside campfire
+    public boolean insertFood(ItemStack stack) {
+        if(stack != null && CampFireRecipeManager.getResultFor(stack) != null) {
+            for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
+                if(cooking_food[slotIndex] == null) {
+                    setStack(slotIndex, stack.copy());
+                    cookingDuration[slotIndex] = 0;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    //For server to client
+    public void writeNbtLite(NbtCompound nbt) {
+        super.writeNbt(nbt);
+        NbtList list = new NbtList();
+
+        for(int var3 = 0; var3 < this.cooking_food.length; ++var3) {
+            if (this.cooking_food[var3] != null) {
+                NbtCompound nbtCom = new NbtCompound();
+                nbtCom.putByte("Slot", (byte)var3);
+                this.cooking_food[var3].writeNbt(nbtCom);
+                list.add(nbtCom);
+            }
+        }
+        nbt.put("Items", list);
+    }
+
+    //For server to client
+    public void readNbtLite(NbtCompound nbt) {
+        super.readNbt(nbt);
+        NbtList list = nbt.getList("Items");
+        this.cooking_food = new ItemStack[this.size()];
+
+        for(int index = 0; index < list.size(); ++index) {
+            NbtCompound nbtCom = (NbtCompound)list.get(index);
+            byte slot = nbtCom.getByte("Slot");
+            if (slot >= 0 && slot < this.cooking_food.length) {
+                this.cooking_food[slot] = new ItemStack(nbtCom);
+            }
+        }
+    }
+
+    //vanilla staff
+
+    @Override
+    public void readNbt(NbtCompound nbt) {
+        super.readNbt(nbt);
+        cookingDuration = nbt.getIntArray("cookedTime");
+        NbtList list = nbt.getList("Items");
+        this.cooking_food = new ItemStack[this.size()];
+
+        for(int index = 0; index < list.size(); ++index) {
+            NbtCompound nbtCom = (NbtCompound)list.get(index);
+            byte slot = nbtCom.getByte("Slot");
+            if (slot >= 0 && slot < this.cooking_food.length) {
+                this.cooking_food[slot] = new ItemStack(nbtCom);
+            }
+        }
+    }
+
+    @Override
+    public void writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt);
+        nbt.put("cookedTime", cookingDuration);
+        NbtList list = new NbtList();
+
+        for(int index = 0; index < this.cooking_food.length; ++index) {
+            if (this.cooking_food[index] != null) {
+                NbtCompound nbtCom = new NbtCompound();
+                nbtCom.putByte("Slot", (byte)index);
+                this.cooking_food[index].writeNbt(nbtCom);
+                list.add(nbtCom);
+            }
+        }
+
+        nbt.put("Items", list);
+    }
+
+    @Override
+    public ItemStack removeStack(int slot, int amount) {
+        if (this.cooking_food[slot] != null) {
+            if (this.cooking_food[slot].count <= amount) {
+                ItemStack stack = this.cooking_food[slot];
+                this.cooking_food[slot] = null;
+                markDirty();
+                return stack;
+            } else {
+                ItemStack stack = this.cooking_food[slot].split(amount);
+                if (this.cooking_food[slot].count == 0) {
+                    this.cooking_food[slot] = null;
+                }
+                markDirty();
+                return stack;
+            }
+        } else {
+            return null;
+        }
+    }
+
+    @Environment(EnvType.SERVER)
+    public Packet createUpdatePacket() {
+        return new CampfireUpdatePacket(this);
+    }
+
+    @Override
+    public void setStack(int slot, ItemStack stack) {
+        this.cooking_food[slot] = stack;
+        if (stack != null && stack.count > this.getMaxCountPerStack()) {
+            stack.count = this.getMaxCountPerStack();
+        }
+        markDirty();
+    }
+
+    @Override
+    public String getName() {
+        return "Campfire";
+    }
+
+    @Override
+    public int getMaxCountPerStack() {
+        return 1;
+    }
+
+    @Override
+    public boolean canPlayerUse(PlayerEntity player) {
+        if (this.world.getBlockEntity(this.x, this.y, this.z) != this) {
+            return false;
+        } else {
+            return !(player.getSquaredDistance((double)this.x + 0.5, (double)this.y + 0.5, (double)this.z + 0.5) > 64.0);
+        }
+    }
+
+    @Override
+    public void tick() {
+        if (!this.world.isRemote) {
+            for(int slotIndex = 0; slotIndex < cooking_food.length; ++slotIndex) {
+                if(cooking_food[slotIndex] != null) {
+                    if(cookingDuration[slotIndex] >= cookingTimeLimit)
+                        finishCookedFood(slotIndex);
+                    else
+                        ++cookingDuration[slotIndex];
+                }
+            }
+        }
+
+        if(!isServer && CampFireStationAPI.shouldRenderSmoke()) {
+            renderParticle();
+        }
+    }
+
+    @Environment(EnvType.SERVER)
+    public void markDirty() {
+        super.markDirty();
+        if(world != null)
+            CampFireStationAPI.getServer().
+                    playerManager.sendToAround
+                            (x,y,z,
+                            64,
+                            world.dimension.id,
+                            createUpdatePacket());
+    }
+
+    @Override
+    public int size() {
+        return this.cooking_food.length;
+    }
+
+    @Override
+    public ItemStack getStack(int slot) {
+        return this.cooking_food[slot];
+    }
+}
