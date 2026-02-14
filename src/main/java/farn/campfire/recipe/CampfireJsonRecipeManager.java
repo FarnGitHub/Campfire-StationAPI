@@ -21,6 +21,9 @@ import java.util.Optional;
 public class CampfireJsonRecipeManager {
     public static final File folderWithRecipeJson;
 
+    private CampfireJsonRecipeManager() {
+    }
+
     static {
         try {
             folderWithRecipeJson = Files.createDirectories(Paths.get(FabricLoader.getInstance().getConfigDir().toString(), "campfire_recipe")).toFile();
@@ -73,12 +76,13 @@ public class CampfireJsonRecipeManager {
         public String namespace;
         public int damage;
 
-        public ItemData(String namespace, int damage) {
-            this.namespace = namespace;
+        public ItemData(String identifier, int damage) {
+            this.namespace = identifier;
             this.damage = damage;
         }
 
     }
+
     public static class RecipeData {
         public ItemData input;
         public ItemData output;

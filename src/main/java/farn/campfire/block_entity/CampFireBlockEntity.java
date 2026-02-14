@@ -17,7 +17,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.world.World;
-import net.modificationstation.stationapi.api.network.packet.MessagePacket;
 
 import java.util.Random;
 
