@@ -29,6 +29,8 @@ public class CampfireJsonRecipeManager {
     }
 
     public static void addRecipeFromRecord(ItemData input, ItemData output) {
+        if(input.item == null || output.item == null)
+            throw new RuntimeException("Item Identifier Not Found");
         if(output.meta < 0) output.meta = 0;
 
         ItemStack newInput =
@@ -46,7 +48,7 @@ public class CampfireJsonRecipeManager {
     }
 
     public static class ItemData {
-        public String item;
+        public String item = null;
         public int meta = -1;
     }
 
