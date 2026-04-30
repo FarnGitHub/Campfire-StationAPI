@@ -1,0 +1,8 @@
+{
+  "input": {
+    "item":"minecraft:porkchop"
+  },
+  "output": {
+    "item":"minecraft:cooked_porkchop"
+  }
+}

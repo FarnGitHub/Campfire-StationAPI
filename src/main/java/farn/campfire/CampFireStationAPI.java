@@ -34,8 +34,6 @@ import net.modificationstation.stationapi.api.util.Namespace;
 import net.modificationstation.stationapi.api.util.Null;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-
 @SuppressWarnings("unused")
 public class CampFireStationAPI {
     @Entrypoint.Namespace
@@ -63,11 +61,7 @@ public class CampFireStationAPI {
     @EventListener
     public void readJsonRecipe(InitFinishedEvent event) {
         hasGCAPI = FabricLoader.getInstance().isModLoaded("gcapi3");
-        File[] theJsons = CampfireJsonRecipeManager.folderWithRecipeJson.listFiles();
-        if(theJsons != null)
-            for(File file : theJsons)
-                if(file != null && file.getName().endsWith(".json"))
-                    CampfireJsonRecipeManager.readJson(file);
+        CampfireJsonRecipeManager.readAll();
     }
 
     @EventListener

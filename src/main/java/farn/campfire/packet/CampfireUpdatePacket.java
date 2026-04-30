@@ -29,9 +29,9 @@ public class CampfireUpdatePacket extends Packet implements ManagedPacket<Campfi
 
     @Environment(EnvType.SERVER)
     public CampfireUpdatePacket(CampFireBlockEntity te) {
+        this();
         data = new NbtCompound();
         te.writeNbtLite(data);
-        worldPacket = true;
     }
 
     @Override

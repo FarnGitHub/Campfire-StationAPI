@@ -10,6 +10,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.world.World;
 import net.modificationstation.stationapi.api.util.math.MathHelper;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 
 @Environment(EnvType.CLIENT)
 public class CampfireSmokeEffect extends Particle implements ParticleDisableQuadDraw {
@@ -53,6 +54,10 @@ public class CampfireSmokeEffect extends Particle implements ParticleDisableQuad
         float partialPosZ = (float) (prevZ + (z - prevZ) * partialTicks - interpZ);
         float scalePar = 0.1F * scale;
         float light = this.getBrightnessAtEyes(1.0F);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GL11.glAlphaFunc(GL11.GL_GREATER, 0.003921569F);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, Minecraft.INSTANCE.textureManager.getTextureId(TEXTURES[this.texIndex % TEXTURES.length]));
         tess.startQuads();
         tess.color(red * light, green * light, blue * light, particleAlpha);
@@ -61,6 +66,8 @@ public class CampfireSmokeEffect extends Particle implements ParticleDisableQuad
         tess.vertex(partialPosX + rotX * scalePar + rotYZ * scalePar, partialPosY + rotXZ * scalePar, partialPosZ + rotZ * scalePar + rotXY * scalePar, 0, 0);
         tess.vertex(partialPosX + rotX * scalePar - rotYZ * scalePar, partialPosY - rotXZ * scalePar, partialPosZ + rotZ * scalePar - rotXY * scalePar, 0, 1);
         tess.draw();
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glAlphaFunc(GL11.GL_GREATER, 0.1F);
     }
 
     @Override
