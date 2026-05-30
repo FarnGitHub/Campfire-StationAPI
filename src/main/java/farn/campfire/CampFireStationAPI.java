@@ -95,7 +95,7 @@ public class CampFireStationAPI {
 
     @EventListener
     public void registerBlockEntity(BlockEntityRegisterEvent event) {
-        event.register(CampFireBlockEntity.class, NAMESPACE.id("Campfire_entity").toString());
+        event.register(NAMESPACE.id("Campfire_entity"), CampFireBlockEntity.class);
     }
 
     @EventListener

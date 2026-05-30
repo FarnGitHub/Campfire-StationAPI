@@ -29,16 +29,16 @@ public class CampfireJsonRecipeManager {
     }
 
     public static void addRecipeFromRecord(ItemData input, ItemData output) {
-        if(input.item == null || output.item == null)
-            throw new RuntimeException("Item Identifier Not Found");
+        if(input.item == null || output.item == null) return;
         if(output.meta < 0) output.meta = 0;
 
-        ItemStack newInput =
-                new ItemStack(
-                        identifierToItemId(input.item), 1, input.meta);
-        ItemStack newOutput =
-                new ItemStack(
-                        identifierToItemId(output.item), 1, output.meta);
+        int inputItemId = identifierToItemId(input.item);
+        int outputItemId = identifierToItemId(output.item);
+
+        if(inputItemId <= 0 || outputItemId <= 0) return;
+
+        ItemStack newInput = new ItemStack(inputItemId, 1, input.meta);
+        ItemStack newOutput = new ItemStack(outputItemId, 1, output.meta);
 
         if(input.meta < 0)
             CampFireRecipeManager.addRecipe(newInput.itemId, newOutput);
@@ -59,6 +59,6 @@ public class CampfireJsonRecipeManager {
 
     public static int identifierToItemId(String n) {
         Optional<Item> item = ItemRegistry.INSTANCE.getOrEmpty(Identifier.of(n));
-        return item.map(itemBase -> itemBase.id).orElse(1);
+        return item.map(itemBase -> itemBase.id).orElse(0);
     }
 }

@@ -8,6 +8,7 @@ import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import org.lwjgl.opengl.GL11;
 
 import net.minecraft.item.ItemStack;
@@ -15,87 +16,58 @@ import net.minecraft.item.ItemStack;
 public class CampFireBlockEntityRenderer extends BlockEntityRenderer
 {
 
-    protected ItemEntity[] invRender = new ItemEntity[4];
+    protected ItemEntity dummyItemEntity;
 
     @Override
-    public void render(BlockEntity tile, double x, double y, double z, float scale)
-    {
+    public void render(BlockEntity tile, double x, double y, double z, float scale) {
         try {
             if (tile instanceof CampFireBlockEntity ctile)
-            {
-
-                for (int slot = 0; slot < ctile.size(); ++slot)
-                {
-                    ItemStack stack = ctile.getStack(slot);
-
-                    if (stack != null)
-                    {
-                        int renderSlot = RENDER_SLOT_MAPPING[slot];
-
-                        if (invRender[slot] == null)
-                        {
-                            invRender[slot] = new ItemEntity(ctile.world, 0,0,0, stack);
-                        }
-                        else
-                            invRender[slot].setWorld(ctile.world);
-                        GL11.glPushMatrix();
-                        StaticItemRendererAPI.setStaticItemRender(true);
-                        GL11.glDisable(GL11.GL_BLEND);
-                        if (stack.getItem() instanceof BlockItem itemForm && BlockRenderManager.isSideLit(Block.BLOCKS[itemForm.id].getRenderType()))
-                        {
-                            double[] position = getRenderPositionFromRenderSlotBlock(renderSlot);
-                            GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
-                            GL11.glRotatef(renderSlot * 90, 0, 1, 0);
-                            GL11.glTranslated(-0.125, 0.075, 0.0);
-                        }
-                        else
-                        {
-                            double[] position = getRenderPositionFromRenderSlot(renderSlot);
-                            GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
-                            GL11.glRotatef(180, 0, 1, 1);
-                            GL11.glRotatef(renderSlot * -90, 0, 0, 1);
-                            GL11.glRotatef(270, 0, 0, 1);
-                        }
-                        GL11.glScalef(0.625F, 0.625F, 0.625F);
-                        invRender[slot].minBrightness = 1.0F;
-                        EntityRenderDispatcher.INSTANCE.render(invRender[slot], 0, 0, 0, 0.0F, 0.0F);
-                        StaticItemRendererAPI.setStaticItemRender(false);
-                        GL11.glPopMatrix();
-                    } else {
-                        invRender[slot] = null;
-                    }
-                }
-            }
-        } catch (Exception e) {
+                render(ctile, x, y, z, scale);
+        } catch (Exception ignored) {
         }
     }
 
-    private static final double BASE_X_OFFSET = 0.9375;
-    private static final double BASE_Y_OFFSET = 0.45;
-    private static final double BASE_Z_OFFSET = 0.9375;
-    private static final double ACROSS = 0.875;
-    private static final double EDGE = 0.125;
-    private static final double OFFSET_FIX_X = EDGE * 0.625;
-    private static final double OFFSET_FIX_Z = EDGE * 0.375;
-    private static final double[][] RENDER_POSITION_ITEM = new double[][] {
-            { BASE_X_OFFSET, BASE_Y_OFFSET, BASE_Z_OFFSET + EDGE - ACROSS },
-            { BASE_X_OFFSET - OFFSET_FIX_X, BASE_Y_OFFSET, BASE_Z_OFFSET - OFFSET_FIX_Z },
-            { BASE_X_OFFSET - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - EDGE },
-            { BASE_X_OFFSET + OFFSET_FIX_X - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET + OFFSET_FIX_Z - ACROSS } };
-    private static final double[][] RENDER_POSITION_BLOCK_ITEM = new double[][] {
-            { BASE_X_OFFSET, BASE_Y_OFFSET, BASE_Z_OFFSET + EDGE - ACROSS },
-            { BASE_X_OFFSET - EDGE, BASE_Y_OFFSET, BASE_Z_OFFSET - (EDGE * 2) },
-            { BASE_X_OFFSET - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - EDGE },
-            { BASE_X_OFFSET + EDGE - ACROSS, BASE_Y_OFFSET, BASE_Z_OFFSET - ACROSS + (EDGE * 2)} };
-    private static final int[] RENDER_SLOT_MAPPING = new int[]{3, 0, 1, 2};
-    public static double[] getRenderPositionFromRenderSlot(int renderslot)
-    {
-        return RENDER_POSITION_ITEM[Math.abs(renderslot) % 4];
+    private void render(CampFireBlockEntity ctile, double x, double y, double z, float scale) {
+        if(dummyItemEntity == null) {
+            dummyItemEntity = new ItemEntity(ctile.world);
+            dummyItemEntity.setPosition(0,0,0);
+        } else if(dummyItemEntity.world != ctile.world)
+            dummyItemEntity.setWorld(ctile.world);
+
+        dummyItemEntity.minBrightness = ctile.world.method_1782((int)x,(int)y,(int)z);
+
+        for (int slot = 0; slot < ctile.size(); ++slot) {
+            ItemStack stack = ctile.getStack(slot);
+
+            if (stack != null) {
+                dummyItemEntity.stack = stack;
+                int renderSlot = CampFireRenderHelper.MAPPING[slot];
+                GL11.glPushMatrix();
+                StaticItemRendererAPI.setStaticItemRender(true);
+                GL11.glDisable(GL11.GL_BLEND);
+                if (renderAsBlock(stack.getItem())) {
+                    double[] position = CampFireRenderHelper.getBlockPos(renderSlot);
+                    GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
+                    GL11.glRotatef(renderSlot * 90, 0, 1, 0);
+                    GL11.glTranslated(-0.125, 0.075, 0.0);
+                } else {
+                    double[] position = CampFireRenderHelper.getItemPos(renderSlot);
+                    GL11.glTranslated(x + position[0], y + position[1], z + position[2]);
+                    GL11.glRotatef(180, 0, 1, 1);
+                    GL11.glRotatef(renderSlot * -90, 0, 0, 1);
+                    GL11.glRotatef(270, 0, 0, 1);
+                }
+                GL11.glScalef(0.625F, 0.625F, 0.625F);
+                EntityRenderDispatcher.INSTANCE.render(dummyItemEntity, 0, 0, 0, 0.0F, 0.0F);
+                StaticItemRendererAPI.setStaticItemRender(false);
+                GL11.glPopMatrix();
+            }
+        }
     }
 
-    public static double[] getRenderPositionFromRenderSlotBlock(int renderslot)
-    {
-        return RENDER_POSITION_BLOCK_ITEM[Math.abs(renderslot) % 4];
+    private boolean renderAsBlock(Item item) {
+        return item instanceof BlockItem block
+                && BlockRenderManager.isSideLit(block.getBlock().getRenderType());
     }
 
 }
